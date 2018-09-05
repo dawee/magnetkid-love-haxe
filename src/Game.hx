@@ -1,7 +1,5 @@
-import love.Bridge;
 import love.LifecycleListener;
 import love.Love;
-import love.Love.API;
 import component.Kid;
 
 class Game implements LifecycleListener {
@@ -10,7 +8,7 @@ class Game implements LifecycleListener {
   static public function main():Void {
     var game = new Game();
 
-    Bridge.addLifecycleListener(game);
+    Love.bridge.addLifecycleListener(game);
   }
 
   public function new() {

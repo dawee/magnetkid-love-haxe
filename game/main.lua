@@ -55,18 +55,18 @@ function api.graphics.newImage(__, ...)
   }
 end
 
-local Bridge = game.__love_Bridge
+game.__love_Love.registerAPI(api)
 
-Bridge.registerAPI(api)
+local bridge = game.__love_Love.bridge
 
-function love.load()
-  Bridge.load()
-end
+local love_entry_points = {
+  "load",
+  "update",
+  "draw"
+}
 
-function love.update(dt)
-  Bridge.update(dt)
-end
-
-function love.draw()
-  Bridge.draw()
+for __, entry_point in ipairs(love_entry_points) do
+  love[entry_point] = function (...)
+    return bridge[entry_point](bridge, ...)
+  end
 end

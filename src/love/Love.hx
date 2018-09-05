@@ -1,5 +1,7 @@
 package love;
 
+import love.Bridge;
+
 typedef Ref = {
   __type__: String,
   __ref__: Int
@@ -52,11 +54,20 @@ class Graphics {
   }
 }
 
+@:expose
 class Love {
   public static var graphics(default, null):Graphics;
-  private static var bridge(default, null):Bridge;
+  public static var bridge(get, null):Bridge;
 
-  public static function initInstance(api:API) {
+  public static function get_bridge():Bridge {
+    if (bridge == null) {
+      bridge = new Bridge();
+    }
+
+    return bridge;
+  }
+
+  public static function registerAPI(api: API) {
     graphics = new Graphics(api.graphics);
   }
 }
