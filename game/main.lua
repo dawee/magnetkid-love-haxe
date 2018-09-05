@@ -1,6 +1,14 @@
-local bridge = require('game')
+local game = require('game')
 
 local ref_table = {}
+
+local function create_ref(value)
+  local ref = #ref_table + 1
+
+  ref_table[ref] = value
+
+  return ref
+end
 
 local function wrap(func)
   return function (__, ...)
@@ -8,17 +16,23 @@ local function wrap(func)
   end
 end
 
-local bridge = {
+local api = {
   graphics = {
     rectangle = wrap(love.graphics.rectangle),
   }
 }
 
-function bridge.graphics.newQuad(__, ...)
-  local quad = love.graphics.newQuad(...)
-  local ref = #ref_table + 1
+function api.graphics.draw(__, image, quad, ...)
+  love.graphics.draw(
+    ref_table[image.__ref__],
+    ref_table[quad.__ref__],
+    ...
+  )
+end
 
-  ref_table[ref] = quad
+function api.graphics.newQuad(__, ...)
+  local quad = love.graphics.newQuad(...)
+  local ref = create_ref(quad)
 
   return {
     __ref__ = ref,
@@ -26,16 +40,33 @@ function bridge.graphics.newQuad(__, ...)
   }
 end
 
-local game = bridge.Game.new(bridge)
+function api.graphics.newImage(__, ...)
+  local image = love.graphics.newImage(...)
+  local ref = create_ref(image)
+
+  return {
+    __ref__ = ref,
+    __type__ = "image",
+    getDimensions = function ()
+      local width, height = image:getDimensions()
+
+      return { width = width, height = height }
+    end
+  }
+end
+
+local Bridge = game.__love_Bridge
+
+Bridge.registerAPI(api)
 
 function love.load()
-  game:load()
+  Bridge.load()
 end
 
 function love.update(dt)
-  game:update(dt)
+  Bridge.update(dt)
 end
 
 function love.draw()
-  game:draw()
+  Bridge.draw()
 end

@@ -1,22 +1,28 @@
+import love.Bridge;
+import love.LifecycleListener;
+import love.Love;
+import love.Love.API;
 import component.Kid;
-import Love;
 
-@:expose
-class Game {
+class Game implements LifecycleListener {
   private var world:World;
-  private var api:LoveAPI;
 
-  public function new(api: LoveAPI) {
-    Love.initInstance(api);
-    this.world = new World();
+  static public function main():Void {
+    var game = new Game();
+
+    Bridge.addLifecycleListener(game);
+  }
+
+  public function new() {
+    world = new World();
   }
 
   public function load() {
-    var quad = Love.graphics.newQuad(0, 0, 300, 300, 300, 300);
+    Kid.load();
   }
 
   public function draw() {
-    this.api.graphics.rectangle('fill', 0, 0, 300, 300);
+    Kid.draw(world.kidState);
   }
 
   public function update(dt: Float) {

@@ -18,13 +18,14 @@ typedef KidState = {
 };
 
 class World {
-  private var kid: KidState;
   private var gravity: Float;
   private var platforms: List<Rect>;
 
+  public var kidState(default, null): KidState;
+
   public function new() {
     gravity = -20;
-    kid = {
+    kidState = {
       height: 1.5,
       feetWidth: 0.6,
       position: { x: 0, y: 0 },
@@ -32,38 +33,38 @@ class World {
     };
 
     platforms = new List<Rect>();
-    platforms.add({left: -20, top: -10.75, width: 40, height: 40});
+    platforms.add({left: -20, top: -3, width: 40, height: 40});
   }
 
   public function step(dt: Float) {
     var nextVelocity: Vec2 = {
-      x: kid.velocity.x,
-      y: kid.velocity.y + gravity * dt
+      x: kidState.velocity.x,
+      y: kidState.velocity.y + gravity * dt
     };
 
     var nextPosition: Vec2 = {
-      x: kid.position.x,
-      y: kid.position.y + nextVelocity.y * dt
+      x: kidState.position.x,
+      y: kidState.position.y + nextVelocity.y * dt
     };
 
     var touchesPlatform = false;
 
     for (platform in platforms) {
-      touchesPlatform = kid.position.y - kid.height / 2 >= platform.top
-        && nextPosition.y - kid.height / 2 <= platform.top
-        && kid.position.x + kid.feetWidth / 2 > platform.left
-        && kid.position.x - kid.feetWidth / 2 < platform.left + platform.width;
+      touchesPlatform = kidState.position.y - kidState.height / 2 >= platform.top
+        && nextPosition.y - kidState.height / 2 <= platform.top
+        && kidState.position.x + kidState.feetWidth / 2 > platform.left
+        && kidState.position.x - kidState.feetWidth / 2 < platform.left + platform.width;
 
       if (touchesPlatform) {
-        kid.position.y = platform.top + kid.height / 2;
-        kid.velocity.y = 0;
+        kidState.position.y = platform.top + kidState.height / 2;
+        kidState.velocity.y = 0;
         break;
       }
     }
 
     if (!touchesPlatform) {
-      kid.velocity.y = nextVelocity.y;
-      kid.position.y = nextPosition.y;
+      kidState.velocity.y = nextVelocity.y;
+      kidState.position.y = nextPosition.y;
     }
   }
 }
