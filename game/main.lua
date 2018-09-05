@@ -32,6 +32,15 @@ function api.graphics.draw(__, image, quad, ...)
   )
 end
 
+function api.graphics.getDimensions()
+  local width, height = love.graphics.getDimensions( )
+
+  return {
+    width = width,
+    height = height
+  }
+end
+
 function api.graphics.newQuad(__, ...)
   local quad = love.graphics.newQuad(...)
   local ref = create_ref(quad)

@@ -1,12 +1,15 @@
+package magnetkid;
+
 import love.LifecycleListener;
 import love.Love;
-import component.Kid;
-import component.Platform;
+
+import magnetkid.Camera;
+import magnetkid.component.Kid;
+import magnetkid.component.Platform;
 
 class Game implements LifecycleListener {
   private var world:World;
-  private var kid:Kid;
-  private var platform:Platform;
+  private var camera:Camera;
 
   static public function main():Void {
     var game = new Game();
@@ -16,25 +19,24 @@ class Game implements LifecycleListener {
 
   public function new() {
     world = new World();
-    kid = new Kid();
-    platform = new Platform();
+    camera = new Camera(Kid.HEIGHT / World.KID_HEIGHT);
   }
 
   public function load() {
-    kid.load();
-
+    Kid.load();
     Love.graphics.setBackgroundColor(0.23, 0.03, 0.32, 1.0);
   }
 
   public function draw() {
-    kid.draw(world.kidState);
+    Kid.draw(camera, world.kid);
 
-    for (platformState in world.platforms) {
-      platform.draw(platformState);
+    for (platform in world.platforms) {
+      Platform.draw(camera, platform);
     }
   }
 
   public function update(dt: Float) {
     world.step(dt);
+    camera.lookAt(world.kid.position);
   }
 }

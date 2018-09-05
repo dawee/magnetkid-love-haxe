@@ -7,20 +7,21 @@ typedef Ref = {
   __ref__: Int
 };
 
-typedef ImageDimensions = {
+typedef Dimensions = {
   width: Float,
   height: Float
 };
 
 typedef Image = {
   > Ref,
-  getDimensions: () -> ImageDimensions
+  getDimensions: () -> Dimensions
 };
 
 typedef Quad = Ref;
 
 typedef GraphicsAPI = {
   draw: (Image, Quad, Float, Float) -> Void,
+  getDimensions: () -> Dimensions,
   newImage: String -> Image,
   newQuad: (Float, Float, Float, Float, Float, Float) -> Quad,
   rectangle: (String, Float, Float, Float, Float) -> Void,
@@ -41,6 +42,10 @@ class Graphics {
 
   public function draw(image, quad, x, y) {
     api.draw(image, quad, x, y);
+  }
+
+  public function getDimensions():Dimensions {
+    return api.getDimensions();
   }
 
   public function newImage(newImage):Image {
