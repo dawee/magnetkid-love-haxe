@@ -10,6 +10,8 @@ typedef Rect = {
   height: Float
 };
 
+typedef PlatformState = Rect;
+
 typedef KidState = {
   height: Float,
   feetWidth: Float,
@@ -19,8 +21,8 @@ typedef KidState = {
 
 class World {
   private var gravity: Float;
-  private var platforms: List<Rect>;
 
+  public var platforms(default, null): List<Rect>;
   public var kidState(default, null): KidState;
 
   public function new() {
@@ -33,7 +35,7 @@ class World {
     };
 
     platforms = new List<Rect>();
-    platforms.add({left: -20, top: -3, width: 40, height: 40});
+    platforms.add({left: -20, top: -3, width: 40, height: 0.5});
   }
 
   public function step(dt: Float) {

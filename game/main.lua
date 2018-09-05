@@ -19,6 +19,8 @@ end
 local api = {
   graphics = {
     rectangle = wrap(love.graphics.rectangle),
+    setBackgroundColor = wrap(love.graphics.setBackgroundColor),
+    setColor = wrap(love.graphics.setColor),
   }
 }
 

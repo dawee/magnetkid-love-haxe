@@ -1,9 +1,12 @@
 import love.LifecycleListener;
 import love.Love;
 import component.Kid;
+import component.Platform;
 
 class Game implements LifecycleListener {
   private var world:World;
+  private var kid:Kid;
+  private var platform:Platform;
 
   static public function main():Void {
     var game = new Game();
@@ -13,14 +16,22 @@ class Game implements LifecycleListener {
 
   public function new() {
     world = new World();
+    kid = new Kid();
+    platform = new Platform();
   }
 
   public function load() {
-    Kid.load();
+    kid.load();
+
+    Love.graphics.setBackgroundColor(0.23, 0.03, 0.32, 1.0);
   }
 
   public function draw() {
-    Kid.draw(world.kidState);
+    kid.draw(world.kidState);
+
+    for (platformState in world.platforms) {
+      platform.draw(platformState);
+    }
   }
 
   public function update(dt: Float) {

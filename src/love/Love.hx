@@ -24,6 +24,8 @@ typedef GraphicsAPI = {
   newImage: String -> Image,
   newQuad: (Float, Float, Float, Float, Float, Float) -> Quad,
   rectangle: (String, Float, Float, Float, Float) -> Void,
+  setBackgroundColor: (Float, Float, Float, Float) -> Void,
+  setColor: (Float, Float, Float, Float) -> Void,
 }
 
 typedef API = {
@@ -51,6 +53,14 @@ class Graphics {
 
   public function rectangle(mode, x, y, width, height) {
     api.rectangle(mode, x, y, width, height);
+  }
+
+  public function setBackgroundColor(red, green, blue, alpha) {
+    api.setBackgroundColor(red, green, blue, alpha);
+  }
+
+  public function setColor(red, green, blue, alpha) {
+    api.setColor(red, green, blue, alpha);
   }
 }
 
