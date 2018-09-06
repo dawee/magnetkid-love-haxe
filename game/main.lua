@@ -73,11 +73,15 @@ local bridge = game.__love_Love.bridge
 local love_entry_points = {
   "load",
   "update",
-  "draw"
+  "draw",
+  "keypressed",
+  "keyreleased",
 }
 
-for __, entry_point in ipairs(love_entry_points) do
-  love[entry_point] = function (...)
-    return bridge[entry_point](bridge, ...)
+for __, entry_point in pairs(love_entry_points) do
+  if bridge[entry_point] then
+    love[entry_point] = function (...)
+      return bridge[entry_point](bridge, ...)
+    end
   end
 end

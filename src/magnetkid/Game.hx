@@ -1,5 +1,6 @@
 package magnetkid;
 
+import love.KeyEventListener;
 import love.LifecycleListener;
 import love.Love;
 
@@ -7,7 +8,7 @@ import magnetkid.Camera;
 import magnetkid.component.Kid;
 import magnetkid.component.Platform;
 
-class Game implements LifecycleListener {
+class Game implements LifecycleListener implements KeyEventListener {
   private var world:World;
   private var camera:Camera;
 
@@ -15,6 +16,7 @@ class Game implements LifecycleListener {
     var game = new Game();
 
     Love.bridge.addLifecycleListener(game);
+    Love.bridge.addKeyEventListener(game);
   }
 
   public function new() {
@@ -38,5 +40,21 @@ class Game implements LifecycleListener {
   public function update(dt: Float) {
     world.step(dt);
     camera.lookAt(world.kid.position);
+  }
+
+  public function keypressed(key: String) {
+    if (key == "left") {
+      world.startWalkingLeft();
+    } else if (key == "right") {
+      world.startWalkingRight();
+    }
+  }
+
+  public function keyreleased(key: String) {
+    if (key == "left") {
+      world.stopWalkingLeft();
+    } else if (key == "right") {
+      world.stopWalkingRight();
+    }
   }
 }

@@ -15,6 +15,8 @@ typedef Rect = {
 typedef Platform = Rect;
 
 typedef Kid = {
+  walkingLeft: Bool,
+  walkingRight: Bool,
   height: Float,
   feetWidth: Float,
   position: Vec2,
@@ -23,6 +25,7 @@ typedef Kid = {
 
 class World {
   public static inline var KID_HEIGHT:Float = 1.5;
+  public static inline var WALK_VELOCITY:Float = 10.0 * 1000 / 3600.0;
 
   private var gravity: Float;
 
@@ -36,10 +39,28 @@ class World {
       feetWidth: 0.6,
       position: { x: 0, y: 0 },
       velocity: { x: 0, y: 0 },
+      walkingLeft: false,
+      walkingRight: false,
     };
 
     platforms = new List<Rect>();
     platforms.add({left: -20, top: -3, width: 40, height: 0.5});
+  }
+
+  public function startWalkingLeft() {
+    kid.walkingLeft = true;
+  }
+
+  public function startWalkingRight() {
+    kid.walkingRight = true;
+  }
+
+  public function stopWalkingLeft() {
+    kid.walkingLeft = false;
+  }
+
+  public function stopWalkingRight() {
+    kid.walkingRight = false;
   }
 
   public function step(dt: Float) {
@@ -48,11 +69,18 @@ class World {
       y: kid.velocity.y + gravity * dt
     };
 
+    if (kid.walkingLeft && !kid.walkingRight) {
+      nextVelocity.x = -WALK_VELOCITY;
+    } else if (kid.walkingRight && !kid.walkingLeft) {
+      nextVelocity.x = WALK_VELOCITY;
+    }
+
     var nextPosition: Vec2 = {
-      x: kid.position.x,
+      x: kid.position.x + nextVelocity.x * dt,
       y: kid.position.y + nextVelocity.y * dt
     };
 
+    trace(nextPosition.x);
     var touchesPlatform = false;
 
     for (platform in platforms) {
@@ -72,5 +100,8 @@ class World {
       kid.velocity.y = nextVelocity.y;
       kid.position.y = nextPosition.y;
     }
+
+    kid.velocity.x = nextVelocity.x;
+    kid.position.x = nextPosition.x;
   }
 }
