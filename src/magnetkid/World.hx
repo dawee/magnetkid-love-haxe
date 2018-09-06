@@ -17,10 +17,9 @@ typedef Platform = Rect;
 typedef Kid = {
   walkingLeft: Bool,
   walkingRight: Bool,
-  height: Float,
-  feetWidth: Float,
   position: Vec2,
-  velocity: Vec2
+  velocity: Vec2,
+  boundingBox: Rect,
 };
 
 class World {
@@ -35,8 +34,12 @@ class World {
   public function new() {
     gravity = -20;
     kid = {
-      height: KID_HEIGHT,
-      feetWidth: 0.6,
+      boundingBox: {
+        left: -0.3,
+        top: KID_HEIGHT / 2,
+        width: 0.6,
+        height: KID_HEIGHT
+      },
       position: { x: 0, y: 0 },
       velocity: { x: 0, y: 0 },
       walkingLeft: false,
@@ -44,9 +47,10 @@ class World {
     };
 
     platforms = new List<Rect>();
-    platforms.add({left: -5, top: -3, width: 10, height: 0.5});
-    platforms.add({left: 0, top: -3.5, width: 10, height: 0.5});
-    platforms.add({left: 5, top: -4, width: 10, height: 0.5});
+    platforms.add({left: -5, top: -3, width: 5, height: 0.5});
+    platforms.add({left: 0, top: -3.5, width: 5, height: 0.5});
+    platforms.add({left: 5, top: -4, width: 5, height: 0.5});
+    platforms.add({left: 10, top: -3.5, width: 5, height: 0.5});
   }
 
   public function startWalkingLeft() {
@@ -84,27 +88,57 @@ class World {
       y: kid.position.y + nextVelocity.y * dt
     };
 
-    var touchesPlatform = false;
+    var touchesPlatformTop = false;
+    var touchesPlatformRight = false;
+    var touchesPlatformLeft = false;
 
     for (platform in platforms) {
-      touchesPlatform = kid.position.y - kid.height / 2 >= platform.top
-        && nextPosition.y - kid.height / 2 <= platform.top
-        && kid.position.x + kid.feetWidth / 2 > platform.left
-        && kid.position.x - kid.feetWidth / 2 < platform.left + platform.width;
+      if (!touchesPlatformTop) {
+        touchesPlatformTop = kid.position.y + kid.boundingBox.top - kid.boundingBox.height >= platform.top
+          && nextPosition.y + kid.boundingBox.top - kid.boundingBox.height <= platform.top
+          && kid.position.x + kid.boundingBox.left + kid.boundingBox.width >= platform.left
+          && kid.position.x + kid.boundingBox.left <= platform.left + platform.width;
 
-      if (touchesPlatform) {
-        kid.position.y = platform.top + kid.height / 2;
-        kid.velocity.y = 0;
-        break;
+        if (touchesPlatformTop) {
+          kid.position.y = platform.top + kid.boundingBox.height - kid.boundingBox.top;
+          kid.velocity.y = 0;
+        }
+      }
+
+      if (!touchesPlatformRight) {
+        touchesPlatformRight = kid.position.x + kid.boundingBox.left >= platform.left + platform.width
+          && nextPosition.x + kid.boundingBox.left <= platform.left + platform.width
+          && kid.position.y + kid.boundingBox.top - kid.boundingBox.height <= platform.top
+          && kid.position.y + kid.boundingBox.top >= platform.top + platform.height;
+
+        if (touchesPlatformRight) {
+          kid.position.x = platform.left + platform.width - kid.boundingBox.left;
+          kid.velocity.x = 0;
+        }
+      }
+
+      if (!touchesPlatformLeft) {
+        touchesPlatformLeft = kid.position.x + kid.boundingBox.left + kid.boundingBox.width <= platform.left
+          && nextPosition.x + kid.boundingBox.left + kid.boundingBox.width >= platform.left
+          && kid.position.y + kid.boundingBox.top - kid.boundingBox.height <= platform.top
+          && kid.position.y + kid.boundingBox.top >= platform.top + platform.height;
+
+
+        if (touchesPlatformLeft) {
+          kid.position.x = platform.left - kid.boundingBox.width - kid.boundingBox.left;
+          kid.velocity.x = 0;
+        }
       }
     }
 
-    if (!touchesPlatform) {
+    if (!touchesPlatformTop) {
       kid.velocity.y = nextVelocity.y;
       kid.position.y = nextPosition.y;
     }
 
-    kid.velocity.x = nextVelocity.x;
-    kid.position.x = nextPosition.x;
+    if (!touchesPlatformRight && !touchesPlatformLeft) {
+      kid.velocity.x = nextVelocity.x;
+      kid.position.x = nextPosition.x;
+    }
   }
 }
