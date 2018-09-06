@@ -22,7 +22,7 @@ class Camera {
   }
 
   public function lookAt(target:World.Vec2) {
-    this.target = {x: target.x, y: 0};
+    this.target = target;
     this.updateScreenTarget();
   }
 

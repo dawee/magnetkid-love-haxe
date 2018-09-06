@@ -44,7 +44,9 @@ class World {
     };
 
     platforms = new List<Rect>();
-    platforms.add({left: -20, top: -3, width: 40, height: 0.5});
+    platforms.add({left: -5, top: -3, width: 10, height: 0.5});
+    platforms.add({left: 0, top: -3.5, width: 10, height: 0.5});
+    platforms.add({left: 5, top: -4, width: 10, height: 0.5});
   }
 
   public function startWalkingLeft() {
@@ -73,6 +75,8 @@ class World {
       nextVelocity.x = -WALK_VELOCITY;
     } else if (kid.walkingRight && !kid.walkingLeft) {
       nextVelocity.x = WALK_VELOCITY;
+    } else {
+      nextVelocity.x = 0;
     }
 
     var nextPosition: Vec2 = {
@@ -80,7 +84,6 @@ class World {
       y: kid.position.y + nextVelocity.y * dt
     };
 
-    trace(nextPosition.x);
     var touchesPlatform = false;
 
     for (platform in platforms) {
