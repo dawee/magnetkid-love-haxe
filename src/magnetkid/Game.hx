@@ -1,6 +1,6 @@
 package magnetkid;
 
-import love.KeyEventListener;
+import love.JoystickEventListener;
 import love.LifecycleListener;
 import love.Love;
 
@@ -8,7 +8,7 @@ import magnetkid.Camera;
 import magnetkid.component.Kid;
 import magnetkid.component.Platform;
 
-class Game implements LifecycleListener implements KeyEventListener {
+class Game implements LifecycleListener implements JoystickEventListener {
   private var world:World;
   private var camera:Camera;
 
@@ -16,7 +16,7 @@ class Game implements LifecycleListener implements KeyEventListener {
     var game = new Game();
 
     Love.bridge.addLifecycleListener(game);
-    Love.bridge.addKeyEventListener(game);
+    Love.bridge.addJoystickEventListener(game);
   }
 
   public function new() {
@@ -31,10 +31,7 @@ class Game implements LifecycleListener implements KeyEventListener {
 
   public function draw() {
     Kid.draw(camera, world.kid);
-
-    for (platform in world.platforms) {
-      Platform.draw(camera, platform);
-    }
+    world.platforms.map(platform -> Platform.draw(camera, platform));
   }
 
   public function update(dt: Float) {
@@ -42,19 +39,28 @@ class Game implements LifecycleListener implements KeyEventListener {
     camera.lookAt(world.kid.position);
   }
 
-  public function keypressed(key: String) {
-    if (key == "left") {
-      world.startWalkingLeft();
-    } else if (key == "right") {
-      world.startWalkingRight();
+  public function gamepadaxis(axis: String, value: Float) {
+    switch (axis) {
+      case 'leftx': {
+        if (value < -0.25) {
+          world.startWalkingLeft();
+        } else if (value > 0.25) {
+          world.startWalkingRight();
+        } else {
+          world.stopWalkingLeft();
+          world.stopWalkingRight();
+        }
+      }
     }
   }
 
-  public function keyreleased(key: String) {
-    if (key == "left") {
-      world.stopWalkingLeft();
-    } else if (key == "right") {
-      world.stopWalkingRight();
-    }
+  public function gamepadpressed(button: String) {
   }
+
+  public function gamepadreleased(button: String) {
+  }
+
+  public function joystickaxis(axis: Int, value: Float) {
+  }
+
 }

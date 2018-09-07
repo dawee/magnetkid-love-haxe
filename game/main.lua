@@ -76,7 +76,18 @@ local love_entry_points = {
   "draw",
   "keypressed",
   "keyreleased",
+  "gamepadaxis",
+  "gamepadpressed",
+  "gamepadreleased",
+  "joystickadded",
+  "joystickaxis",
+  "joystickhat",
+  "joystickpressed",
+  "joystickreleased",
+  "joystickremoved",
 }
+
+
 
 for __, entry_point in pairs(love_entry_points) do
   if bridge[entry_point] then
