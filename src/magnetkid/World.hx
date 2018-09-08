@@ -16,13 +16,17 @@ typedef Rect = {
 
 typedef Platform = Rect;
 
+typedef Condition = Option<() -> Bool>;
+
 typedef Force = {
+  condition: Condition,
   minVelocity: Vec2,
   acceleration: Vec2,
 };
 
 enum ForceName {
   Gravity;
+  Jump;
   WalkLeft;
   WalkRight;
 }
@@ -40,17 +44,8 @@ typedef Kid = {
 class World {
   public static inline var KID_HEIGHT:Float = 1.5;
 
-  private static var WALK_LEFT:Force = {
-    acceleration: { x: 0, y: 0 },
-    minVelocity: { x: -10.0 * (1000 / 3600.0), y: 0 }
-  };
-
-  private static var WALK_RIGHT:Force = {
-    acceleration: { x: 0, y: 0 },
-    minVelocity: { x: 10.0 * (1000 / 3600.0), y: 0 }
-  };
-
-  private static var GRAVITY:Force = {
+  private var GRAVITY:Force = {
+    condition: None,
     acceleration: { x: 0, y: -20 },
     minVelocity: { x: 0, y: 0 }
   };
@@ -84,11 +79,23 @@ class World {
   }
 
   public function startWalkingLeft() {
-    kid.forces[WalkLeft] = WALK_LEFT;
+    var force: Force = {
+      condition: Some(() -> kid.touchesPlatformTop),
+      acceleration: { x: 0, y: 0 },
+      minVelocity: { x: -10.0 * (1000 / 3600.0), y: 0 }
+    };
+
+    kid.forces[WalkLeft] = force;
   }
 
   public function startWalkingRight() {
-    kid.forces[WalkLeft] = WALK_RIGHT;
+    var force: Force = {
+      condition: Some(() -> kid.touchesPlatformTop),
+      acceleration: { x: 0, y: 0 },
+      minVelocity: { x: 10.0 * (1000 / 3600.0), y: 0 }
+    };
+
+    kid.forces[WalkRight] = force;
   }
 
   public function stopWalkingLeft() {
@@ -99,24 +106,49 @@ class World {
     kid.forces.remove(WalkRight);
   }
 
+  public function kidJump() {
+    var force: Force = {
+      condition: Some(() -> kid.touchesPlatformTop),
+      acceleration: { x: 0, y: 0 },
+      minVelocity: { x: 0, y: 30.0 * (1000 / 3600.0) }
+    };
+
+    kid.forces[Jump] = force;
+  }
+
+  private function validateCondition(condition: Condition) {
+    return switch (condition) {
+      case None: true;
+      case Some(predicate): predicate();
+    };
+  }
+
   private function mergeForces(forces: Iterable<Force>): Force {
     return Lambda.fold(
       kid.forces,
       (force: Force, computed: Force) -> {
-        acceleration: {
-          x: force.acceleration.x + computed.acceleration.x,
-          y: force.acceleration.y + computed.acceleration.y
-        },
-        minVelocity: {
-          x: Math.abs(force.minVelocity.x) > Math.abs(computed.minVelocity.x)
-            ? force.minVelocity.x
-            : computed.minVelocity.x,
-          y: Math.abs(force.minVelocity.y) > Math.abs(computed.minVelocity.y)
-            ? force.minVelocity.y
-            : computed.minVelocity.y,
+        if (!validateCondition(force.condition)) {
+          return computed;
         }
+
+        return {
+          condition: None,
+          acceleration: {
+            x: force.acceleration.x + computed.acceleration.x,
+            y: force.acceleration.y + computed.acceleration.y
+          },
+          minVelocity: {
+            x: Math.abs(force.minVelocity.x) > Math.abs(computed.minVelocity.x)
+              ? force.minVelocity.x
+              : computed.minVelocity.x,
+            y: Math.abs(force.minVelocity.y) > Math.abs(computed.minVelocity.y)
+              ? force.minVelocity.y
+              : computed.minVelocity.y,
+          }
+        };
       },
       {
+        condition: None,
         acceleration: { x: 0, y: 0 },
         minVelocity: { x: 0, y: 0 }
       }
@@ -133,7 +165,6 @@ class World {
   private function computeVelocity(velocity: Vec2, force: Force, dt: Float): Vec2 {
     var integration = integrateAcceleration(velocity, force.acceleration, dt);
 
-    trace(force.minVelocity.x);
     return {
       x: Math.abs(integration.x) < Math.abs(force.minVelocity.x) ? force.minVelocity.x : integration.x,
       y: Math.abs(integration.y) < Math.abs(force.minVelocity.y) ? force.minVelocity.y : integration.y,
@@ -157,7 +188,7 @@ class World {
     kid.touchesPlatformLeft = false;
 
     for (platform in platforms) {
-      if (!kid.touchesPlatformTop) {
+      if (!kid.touchesPlatformTop && nextVelocity.y < 0) {
         kid.touchesPlatformTop = kid.position.y + kid.boundingBox.top - kid.boundingBox.height >= platform.top
           && nextPosition.y + kid.boundingBox.top - kid.boundingBox.height <= platform.top
           && kid.position.x + kid.boundingBox.left + kid.boundingBox.width >= platform.left
@@ -169,7 +200,7 @@ class World {
         }
       }
 
-      if (!kid.touchesPlatformRight) {
+      if (!kid.touchesPlatformRight && nextVelocity.x < 0) {
         kid.touchesPlatformRight = kid.position.x + kid.boundingBox.left >= platform.left + platform.width
           && nextPosition.x + kid.boundingBox.left <= platform.left + platform.width
           && kid.position.y + kid.boundingBox.top - kid.boundingBox.height <= platform.top
@@ -181,7 +212,7 @@ class World {
         }
       }
 
-      if (!kid.touchesPlatformLeft) {
+      if (!kid.touchesPlatformLeft && nextVelocity.x > 0) {
         kid.touchesPlatformLeft = kid.position.x + kid.boundingBox.left + kid.boundingBox.width <= platform.left
           && nextPosition.x + kid.boundingBox.left + kid.boundingBox.width >= platform.left
           && kid.position.y + kid.boundingBox.top - kid.boundingBox.height <= platform.top
@@ -204,5 +235,7 @@ class World {
       kid.velocity.x = nextVelocity.x;
       kid.position.x = nextPosition.x;
     }
+
+    kid.forces.remove(Jump);
   }
 }

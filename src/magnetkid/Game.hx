@@ -55,6 +55,9 @@ class Game implements LifecycleListener implements JoystickEventListener {
   }
 
   public function gamepadpressed(button: String) {
+    if (button == 'a') {
+      world.kidJump();
+    }
   }
 
   public function gamepadreleased(button: String) {
