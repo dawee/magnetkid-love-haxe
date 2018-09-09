@@ -31,6 +31,12 @@ enum ForceName {
   WalkRight;
 }
 
+enum Walking {
+  Not;
+  Left;
+  Right;
+}
+
 typedef Kid = {
   position: Vec2,
   velocity: Vec2,
@@ -39,6 +45,7 @@ typedef Kid = {
   touchesPlatformTop: Bool,
   touchesPlatformRight: Bool,
   touchesPlatformLeft: Bool,
+  walking: Walking
 };
 
 class World {
@@ -68,7 +75,8 @@ class World {
       touchesPlatformLeft: false,
       forces: [
         Gravity => GRAVITY
-      ]
+      ],
+      walking: Not
     };
 
     platforms = new List<Rect>();
@@ -82,7 +90,7 @@ class World {
     var force: Force = {
       condition: Some(() -> kid.touchesPlatformTop),
       acceleration: { x: 0, y: 0 },
-      minVelocity: { x: -10.0 * (1000 / 3600.0), y: 0 }
+      minVelocity: { x: -15.0 * (1000 / 3600.0), y: 0 }
     };
 
     kid.forces[WalkLeft] = force;
@@ -92,7 +100,7 @@ class World {
     var force: Force = {
       condition: Some(() -> kid.touchesPlatformTop),
       acceleration: { x: 0, y: 0 },
-      minVelocity: { x: 10.0 * (1000 / 3600.0), y: 0 }
+      minVelocity: { x: 15.0 * (1000 / 3600.0), y: 0 }
     };
 
     kid.forces[WalkRight] = force;
@@ -109,8 +117,8 @@ class World {
   public function kidJump() {
     var force: Force = {
       condition: Some(() -> kid.touchesPlatformTop),
-      acceleration: { x: 0, y: 0 },
-      minVelocity: { x: 0, y: 30.0 * (1000 / 3600.0) }
+      acceleration: { x: 0, y: 500 },
+      minVelocity: { x: 0, y: 0 }
     };
 
     kid.forces[Jump] = force;
@@ -229,6 +237,14 @@ class World {
     if (!kid.touchesPlatformTop) {
       kid.velocity.y = nextVelocity.y;
       kid.position.y = nextPosition.y;
+    }
+
+    if (kid.forces.exists(WalkRight) && validateCondition(kid.forces[WalkRight].condition)) {
+      kid.walking = Right;
+    } else if (kid.forces.exists(WalkLeft) && validateCondition(kid.forces[WalkLeft].condition)) {
+      kid.walking = Left;
+    } else {
+      kid.walking = Not;
     }
 
     if (!kid.touchesPlatformRight && !kid.touchesPlatformLeft) {

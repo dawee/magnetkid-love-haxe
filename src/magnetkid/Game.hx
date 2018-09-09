@@ -11,6 +11,7 @@ import magnetkid.component.Platform;
 class Game implements LifecycleListener implements JoystickEventListener {
   private var world:World;
   private var camera:Camera;
+  private var kid:Kid;
 
   static public function main():Void {
     var game = new Game();
@@ -20,17 +21,18 @@ class Game implements LifecycleListener implements JoystickEventListener {
   }
 
   public function new() {
+    kid = new Kid();
     world = new World();
     camera = new Camera(Kid.HEIGHT / World.KID_HEIGHT);
   }
 
   public function load() {
-    Kid.load();
+    kid.load();
     Love.graphics.setBackgroundColor(0.23, 0.03, 0.32, 1.0);
   }
 
   public function draw() {
-    Kid.draw(camera, world.kid);
+    kid.draw(camera, world.kid);
     world.platforms.map(platform -> Platform.draw(camera, platform));
   }
 
