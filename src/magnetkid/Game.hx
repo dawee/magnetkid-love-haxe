@@ -4,9 +4,9 @@ import love.JoystickEventListener;
 import love.LifecycleListener;
 import love.Love;
 
-import magnetkid.Camera;
-import magnetkid.component.Kid;
-import magnetkid.component.Platform;
+using magnetkid.component.Kid;
+using magnetkid.component.Platform;
+using magnetkid.physics.World;
 
 class Game implements LifecycleListener implements JoystickEventListener {
   private var world:World;
@@ -24,6 +24,8 @@ class Game implements LifecycleListener implements JoystickEventListener {
     kid = new Kid();
     world = new World();
     camera = new Camera(Kid.HEIGHT / World.KID_HEIGHT);
+
+    world.addIntentListener(kid);
   }
 
   public function load() {

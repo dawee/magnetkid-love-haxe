@@ -1,4 +1,4 @@
-package magnetkid;
+package magnetkid.physics;
 
 import haxe.ds.Option;
 
@@ -14,51 +14,50 @@ typedef Rect = {
   height: Float
 };
 
-typedef Platform = Rect;
-
-typedef Condition = Option<() -> Bool>;
+typedef PlatformState = Rect;
 
 typedef Force = {
-  condition: Condition,
   minVelocity: Vec2,
   acceleration: Vec2,
 };
 
-enum ForceName {
+typedef Condition = Option<() -> Bool>;
+
+typedef Intent = {
+  > Force,
+  condition: Condition,
+  validated: Bool
+};
+
+enum IntentName {
   Gravity;
   Jump;
   WalkLeft;
   WalkRight;
 }
 
-enum Walking {
-  Not;
-  Left;
-  Right;
-}
-
-typedef Kid = {
+typedef KidState = {
   position: Vec2,
   velocity: Vec2,
   boundingBox: Rect,
-  forces: Map<ForceName, Force>,
+  intents: Map<IntentName, Intent>,
   touchesPlatformTop: Bool,
   touchesPlatformRight: Bool,
-  touchesPlatformLeft: Bool,
-  walking: Walking
+  touchesPlatformLeft: Bool
 };
 
 class World {
   public static inline var KID_HEIGHT:Float = 1.5;
 
   private var GRAVITY:Force = {
-    condition: None,
     acceleration: { x: 0, y: -20 },
     minVelocity: { x: 0, y: 0 }
   };
 
-  public var platforms(default, null): List<Platform>;
-  public var kid(default, null): Kid;
+  private var intentListeners: List<IntentListener>;
+
+  public var platforms(default, null): List<PlatformState>;
+  public var kid(default, null): KidState;
 
   public function new() {
     kid = {
@@ -73,12 +72,17 @@ class World {
       touchesPlatformTop: false,
       touchesPlatformRight: false,
       touchesPlatformLeft: false,
-      forces: [
-        Gravity => GRAVITY
-      ],
-      walking: Not
+      intents: [
+        Gravity => {
+          acceleration: GRAVITY.acceleration,
+          minVelocity: GRAVITY.minVelocity,
+          condition: None,
+          validated: false
+        }
+      ]
     };
 
+    intentListeners = new List<IntentListener>();
     platforms = new List<Rect>();
     platforms.add({left: -5, top: -3, width: 5, height: 0.5});
     platforms.add({left: 0, top: -3.5, width: 5, height: 0.5});
@@ -86,42 +90,49 @@ class World {
     platforms.add({left: 10, top: -3.5, width: 5, height: 0.5});
   }
 
+  public function addIntentListener(listener: IntentListener) {
+    intentListeners.add(listener);
+  }
+
   public function startWalkingLeft() {
-    var force: Force = {
+    var intent: Intent = {
       condition: Some(() -> kid.touchesPlatformTop),
       acceleration: { x: 0, y: 0 },
-      minVelocity: { x: -15.0 * (1000 / 3600.0), y: 0 }
+      minVelocity: { x: -15.0 * (1000 / 3600.0), y: 0 },
+      validated: false
     };
 
-    kid.forces[WalkLeft] = force;
+    kid.intents[WalkLeft] = intent;
   }
 
   public function startWalkingRight() {
-    var force: Force = {
+    var intent: Intent = {
       condition: Some(() -> kid.touchesPlatformTop),
       acceleration: { x: 0, y: 0 },
-      minVelocity: { x: 15.0 * (1000 / 3600.0), y: 0 }
+      minVelocity: { x: 15.0 * (1000 / 3600.0), y: 0 },
+      validated: false
     };
 
-    kid.forces[WalkRight] = force;
+    kid.intents[WalkRight] = intent;
   }
 
   public function stopWalkingLeft() {
-    kid.forces.remove(WalkLeft);
+    kid.intents.remove(WalkLeft);
   }
 
   public function stopWalkingRight() {
-    kid.forces.remove(WalkRight);
+    kid.intents.remove(WalkRight);
   }
 
   public function kidJump() {
-    var force: Force = {
+    var intent: Intent = {
       condition: Some(() -> kid.touchesPlatformTop),
       acceleration: { x: 0, y: 500 },
-      minVelocity: { x: 0, y: 0 }
+      minVelocity: { x: 0, y: 0 },
+      validated: false
     };
 
-    kid.forces[Jump] = force;
+    kid.intents[Jump] = intent;
   }
 
   private function validateCondition(condition: Condition) {
@@ -131,32 +142,45 @@ class World {
     };
   }
 
-  private function mergeForces(forces: Iterable<Force>): Force {
+  private function updateIntentValidations() {
+    for (intentName in kid.intents.keys()) {
+      var intent = kid.intents[intentName];
+      var validated = validateCondition(intent.condition);
+
+      if (validated && !intent.validated) {
+        for (listener in intentListeners) {
+          listener.validatedIntent(intentName);
+        }
+      }
+
+      intent.validated = validated;
+    }
+  }
+
+  private function computeForce(intents: Iterable<Intent>): Force {
     return Lambda.fold(
-      kid.forces,
-      (force: Force, computed: Force) -> {
-        if (!validateCondition(force.condition)) {
+      kid.intents,
+      (intent: Intent, computed: Force) -> {
+        if (!intent.validated) {
           return computed;
         }
 
         return {
-          condition: None,
           acceleration: {
-            x: force.acceleration.x + computed.acceleration.x,
-            y: force.acceleration.y + computed.acceleration.y
+            x: intent.acceleration.x + computed.acceleration.x,
+            y: intent.acceleration.y + computed.acceleration.y
           },
           minVelocity: {
-            x: Math.abs(force.minVelocity.x) > Math.abs(computed.minVelocity.x)
-              ? force.minVelocity.x
+            x: Math.abs(intent.minVelocity.x) > Math.abs(computed.minVelocity.x)
+              ? intent.minVelocity.x
               : computed.minVelocity.x,
-            y: Math.abs(force.minVelocity.y) > Math.abs(computed.minVelocity.y)
-              ? force.minVelocity.y
+            y: Math.abs(intent.minVelocity.y) > Math.abs(computed.minVelocity.y)
+              ? intent.minVelocity.y
               : computed.minVelocity.y,
           }
         };
       },
       {
-        condition: None,
         acceleration: { x: 0, y: 0 },
         minVelocity: { x: 0, y: 0 }
       }
@@ -187,7 +211,9 @@ class World {
   }
 
   public function step(dt: Float) {
-    var force = mergeForces(kid.forces);
+    updateIntentValidations();
+
+    var force = computeForce(kid.intents);
     var nextVelocity = computeVelocity(kid.velocity, force, dt);
     var nextPosition = computePosition(kid.position, kid.velocity, dt);
 
@@ -239,19 +265,11 @@ class World {
       kid.position.y = nextPosition.y;
     }
 
-    if (kid.forces.exists(WalkRight) && validateCondition(kid.forces[WalkRight].condition)) {
-      kid.walking = Right;
-    } else if (kid.forces.exists(WalkLeft) && validateCondition(kid.forces[WalkLeft].condition)) {
-      kid.walking = Left;
-    } else {
-      kid.walking = Not;
-    }
-
     if (!kid.touchesPlatformRight && !kid.touchesPlatformLeft) {
       kid.velocity.x = nextVelocity.x;
       kid.position.x = nextPosition.x;
     }
 
-    kid.forces.remove(Jump);
+    kid.intents.remove(Jump);
   }
 }

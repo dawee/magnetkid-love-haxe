@@ -3,14 +3,17 @@ package magnetkid.component;
 import love.Love;
 import love.Love.Image;
 import love.Love.Quad;
-import magnetkid.World;
+
+using magnetkid.physics.World.KidState;
+using magnetkid.physics.World.IntentName;
+using magnetkid.physics.IntentListener;
 
 typedef QuadsMap = {
   standLeft: Quad,
   standRight: Quad
 };
 
-class Kid {
+class Kid implements IntentListener {
   public static inline var WIDTH:Float = 72;
   public static inline var HEIGHT:Float = 112;
 
@@ -33,6 +36,14 @@ class Kid {
     );
   }
 
+  public function validatedIntent(intentName: IntentName) {
+    quad = switch (intentName) {
+      case WalkLeft: quadsMap.standLeft;
+      case WalkRight: quadsMap.standRight;
+      default: quad;
+    }
+  }
+
   public function load() {
     image = Love.graphics.newImage('assets/kid.png');
     quadsMap = {
@@ -43,14 +54,14 @@ class Kid {
     quad = quadsMap.standRight;
   }
 
-  public function draw(camera: Camera, state: World.Kid) {
+  public function draw(camera: Camera, state: KidState) {
     var screenPosition = camera.getScreenPosition(state.position);
 
-    quad = switch (state.walking) {
-      case Left: quadsMap.standLeft;
-      case Right: quadsMap.standRight;
-      case Not: quad;
-    };
+    // quad = switch (state.walking) {
+    //   case Left: quadsMap.standLeft;
+    //   case Right: quadsMap.standRight;
+    //   case Not: quad;
+    // };
 
     Love.graphics.setColor(1.0, 1.0, 1.0, 1.0);
     Love.graphics.draw(
