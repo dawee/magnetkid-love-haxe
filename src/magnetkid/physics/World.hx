@@ -34,6 +34,7 @@ enum IntentName {
   Jump;
   WalkLeft;
   WalkRight;
+  SeekAttractionUp;
 }
 
 typedef KidState = {
@@ -49,9 +50,30 @@ typedef KidState = {
 class World {
   public static inline var KID_HEIGHT:Float = 1.5;
 
+  private static var ZeroVec2:Vec2 = { x: 0, y: 0 };
+  private static var ZeroForce:Force = {
+    acceleration: ZeroVec2,
+    minVelocity: ZeroVec2
+  };
+
   private var GRAVITY:Force = {
     acceleration: { x: 0, y: -20 },
     minVelocity: { x: 0, y: 0 }
+  };
+
+  private var WALK_LEFT:Force = {
+    acceleration: { x: 0, y: 0 },
+    minVelocity: { x: -15.0 * (1000 / 3600.0), y: 0 },
+  };
+
+  private var WALK_RIGHT:Force = {
+    acceleration: { x: 0, y: 0 },
+    minVelocity: { x: 15.0 * (1000 / 3600.0), y: 0 },
+  };
+
+  private var JUMP:Force = {
+    acceleration: { x: 0, y: 500 },
+    minVelocity: { x: 0, y: 0 },
   };
 
   private var intentListeners: List<IntentListener>;
@@ -90,49 +112,48 @@ class World {
     platforms.add({left: 10, top: -3.5, width: 5, height: 0.5});
   }
 
+  private function addIntent(intentName: IntentName, force: Force, condition: Condition) {
+    kid.intents[intentName] = {
+      acceleration: force.acceleration,
+      minVelocity: force.minVelocity,
+      condition: condition,
+      validated: false
+    };
+
+    intentListeners.map(listener -> listener.addedIntent(intentName));
+  }
+
+  private function removeIntent(intentName: IntentName) {
+    kid.intents.remove(intentName);
+    intentListeners.map(listener -> listener.removedIntent(intentName));
+  }
+
+  private function hasMetallicElementUp():Bool {
+    return false;
+  }
+
   public function addIntentListener(listener: IntentListener) {
     intentListeners.add(listener);
   }
 
   public function startWalkingLeft() {
-    var intent: Intent = {
-      condition: Some(() -> kid.touchesPlatformTop),
-      acceleration: { x: 0, y: 0 },
-      minVelocity: { x: -15.0 * (1000 / 3600.0), y: 0 },
-      validated: false
-    };
-
-    kid.intents[WalkLeft] = intent;
+    addIntent(WalkLeft, WALK_LEFT, Some(() -> kid.touchesPlatformTop));
   }
 
   public function startWalkingRight() {
-    var intent: Intent = {
-      condition: Some(() -> kid.touchesPlatformTop),
-      acceleration: { x: 0, y: 0 },
-      minVelocity: { x: 15.0 * (1000 / 3600.0), y: 0 },
-      validated: false
-    };
-
-    kid.intents[WalkRight] = intent;
+    addIntent(WalkRight, WALK_RIGHT, Some(() -> kid.touchesPlatformTop));
   }
 
   public function stopWalkingLeft() {
-    kid.intents.remove(WalkLeft);
+    removeIntent(WalkLeft);
   }
 
   public function stopWalkingRight() {
-    kid.intents.remove(WalkRight);
+    removeIntent(WalkRight);
   }
 
   public function kidJump() {
-    var intent: Intent = {
-      condition: Some(() -> kid.touchesPlatformTop),
-      acceleration: { x: 0, y: 500 },
-      minVelocity: { x: 0, y: 0 },
-      validated: false
-    };
-
-    kid.intents[Jump] = intent;
+    addIntent(Jump, JUMP, Some(() -> kid.touchesPlatformTop));
   }
 
   private function validateCondition(condition: Condition) {
@@ -155,6 +176,14 @@ class World {
 
       intent.validated = validated;
     }
+  }
+
+  public function seekAttractionUp() {
+    addIntent(SeekAttractionUp, ZeroForce, None);
+  }
+
+  public function stopSeekingAttractionUp() {
+    removeIntent(SeekAttractionUp);
   }
 
   private function computeForce(intents: Iterable<Intent>): Force {
