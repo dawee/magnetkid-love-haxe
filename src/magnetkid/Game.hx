@@ -4,7 +4,11 @@ import love.JoystickEventListener;
 import love.LifecycleListener;
 import love.Love;
 
+import magnetkid.physics.World;
+
 class Game implements LifecycleListener implements JoystickEventListener {
+  private var world: World;
+
 
   static public function main():Void {
     var game = new Game();
@@ -13,7 +17,9 @@ class Game implements LifecycleListener implements JoystickEventListener {
     Love.bridge.addJoystickEventListener(game);
   }
 
-  public function new() {}
+  public function new() {
+    world = new World();
+  }
 
   public function load() {}
 
