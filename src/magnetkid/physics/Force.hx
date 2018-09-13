@@ -29,4 +29,19 @@ class Force {
   public static function fromMaxVelocity(maxVelocity: Velocity): Force {
     return new Force(Acceleration.Null, Velocity.Null, maxVelocity);
   }
+
+  public static function merge(forceA: Force, forceB: Force): Force {
+    var acceleration = forceA.acceleration + forceB.acceleration;
+
+    var minVelocity = forceA.minVelocity > forceB.minVelocity
+      ? forceA.minVelocity
+      : forceB.minVelocity;
+
+    var maxVelocity = forceA.maxVelocity > forceB.maxVelocity
+      ? forceA.maxVelocity
+      : forceB.maxVelocity;
+
+
+    return new Force(acceleration, minVelocity, maxVelocity);
+  }
 }

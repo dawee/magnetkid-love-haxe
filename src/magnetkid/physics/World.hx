@@ -46,4 +46,13 @@ class World {
     }
   }
 
+  public function update(dt: Float) {
+    var activeForces = Lambda
+      .filter(state.kid.intents, intent -> intent.active())
+      .map(intent -> intent.force());
+
+    var force = Lambda.fold(activeForces, Force.merge, Force.Null);
+    var nextVelocity = state.kid.velocity + force.acceleration.integrate(dt);
+  }
+
 }
